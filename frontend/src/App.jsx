@@ -1,122 +1,159 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from "react";
+
+import ChatRoom from "./components/ChatRoom";
+import UsernameForm from "./components/UsernameForm";
+import {
+  fetchMessages,
+  sendMessage,
+} from "./services/api";
+import { socket } from "./services/socket";
+
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [username, setUsername] = useState(
+    () => localStorage.getItem("chatUsername") || ""
+  );
+
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [isConnected, setIsConnected] = useState(
+    socket.connected
+  );
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!username) {
+      return undefined;
+    }
+
+    const loadChatHistory = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const previousMessages = await fetchMessages();
+        setMessages(previousMessages);
+      } catch (requestError) {
+        console.error(requestError);
+        setError("Unable to load previous messages.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handleConnect = () => {
+      setIsConnected(true);
+      setError("");
+    };
+
+    const handleDisconnect = () => {
+      setIsConnected(false);
+    };
+
+    const handleConnectError = (socketError) => {
+      console.error("Socket connection error:", socketError);
+      setIsConnected(false);
+      setError(
+        "Unable to connect to the chat server. Retrying..."
+      );
+    };
+
+    const handleNewMessage = (newMessage) => {
+      setMessages((currentMessages) => {
+        const alreadyExists = currentMessages.some(
+          (message) => message.id === newMessage.id
+        );
+
+        if (alreadyExists) {
+          return currentMessages;
+        }
+
+        return [...currentMessages, newMessage];
+      });
+    };
+
+    loadChatHistory();
+
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("message:new", handleNewMessage);
+
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("message:new", handleNewMessage);
+      socket.disconnect();
+    };
+  }, [username]);
+
+  const handleJoin = (joinedUsername) => {
+    setUsername(joinedUsername);
+  };
+
+  const handleSendMessage = async (content) => {
+    try {
+      setIsSending(true);
+      setError("");
+
+      await sendMessage({
+        username,
+        content,
+      });
+
+      /*
+       * Do not manually add the POST response here.
+       * The backend broadcasts "message:new", and the
+       * Socket.io listener adds it for every user,
+       * including the sender.
+       */
+    } catch (requestError) {
+      console.error(requestError);
+
+      const message =
+        requestError.response?.data?.message ||
+        "Unable to send your message.";
+
+      setError(message);
+      throw requestError;
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("chatUsername");
+    socket.disconnect();
+
+    setUsername("");
+    setMessages([]);
+    setError("");
+    setIsConnected(false);
+  };
+
+  if (!username) {
+    return <UsernameForm onJoin={handleJoin} />;
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <ChatRoom
+      username={username}
+      messages={messages}
+      loading={loading}
+      isSending={isSending}
+      isConnected={isConnected}
+      error={error}
+      onSendMessage={handleSendMessage}
+      onLogout={handleLogout}
+    />
+  );
 }
 
-export default App
+export default App;
