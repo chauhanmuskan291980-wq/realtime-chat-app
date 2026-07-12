@@ -5,14 +5,7 @@ A full-stack real-time chat application built with **React**, **Node.js**, **Exp
 The application allows multiple users to join a public chat room, send and receive messages instantly, view previous messages after refreshing the page, see message timestamps, view online users, and see typing indicators.
 
 ---
-
-## Demo
-
-- **GitHub Repository:** `<ADD_YOUR_GITHUB_REPOSITORY_LINK>`
-- **Screen Recording:** `<ADD_YOUR_GOOGLE_DRIVE_VIDEO_LINK>`
-- **Live Application:** Not deployed / Optional bonus
-
-> Replace the placeholders above before submitting the assignment.
+ 
 
 ---
 
