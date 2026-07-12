@@ -1,12 +1,58 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function MessageInput({
   onSendMessage,
+  onTypingStart,
+  onTypingStop,
   isSending,
   isConnected,
 }) {
   const [content, setContent] = useState("");
   const [error, setError] = useState("");
+
+  const typingTimerRef = useRef(null);
+  const isTypingRef = useRef(false);
+
+  const stopTyping = () => {
+    if (typingTimerRef.current) {
+      clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+
+    if (isTypingRef.current) {
+      onTypingStop();
+      isTypingRef.current = false;
+    }
+  };
+
+  const handleContentChange = (event) => {
+    const newContent = event.target.value;
+
+    setContent(newContent);
+    setError("");
+
+    if (!newContent.trim()) {
+      stopTyping();
+      return;
+    }
+
+    if (!isTypingRef.current) {
+      onTypingStart();
+      isTypingRef.current = true;
+    }
+
+    if (typingTimerRef.current) {
+      clearTimeout(typingTimerRef.current);
+    }
+
+    /*
+     * Stop showing the typing indicator when the user
+     * has not typed anything for 1.2 seconds.
+     */
+    typingTimerRef.current = setTimeout(() => {
+      stopTyping();
+    }, 1200);
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -24,13 +70,28 @@ function MessageInput({
     }
 
     try {
+      stopTyping();
+
       await onSendMessage(cleanedContent);
+
       setContent("");
       setError("");
     } catch {
-      // The parent component displays the API error.
+      // API error is displayed by the parent component.
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current);
+      }
+
+      if (isTypingRef.current) {
+        onTypingStop();
+      }
+    };
+  }, [onTypingStop]);
 
   return (
     <footer className="message-input-area">
@@ -48,11 +109,9 @@ function MessageInput({
             }
             rows={1}
             maxLength={500}
-            disabled={isSending}
-            onChange={(event) => {
-              setContent(event.target.value);
-              setError("");
-            }}
+            disabled={isSending || !isConnected}
+            onChange={handleContentChange}
+            onBlur={stopTyping}
             onKeyDown={(event) => {
               if (
                 event.key === "Enter" &&

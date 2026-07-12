@@ -1,15 +1,19 @@
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import MessageList from "./MessageList";
+import TypingIndicator from "./TypingIndicator";
 
 function ChatRoom({
   username,
   messages,
+  typingUsers,
   loading,
   isSending,
   isConnected,
   error,
   onSendMessage,
+  onTypingStart,
+  onTypingStop,
   onLogout,
 }) {
   return (
@@ -33,8 +37,12 @@ function ChatRoom({
           loading={loading}
         />
 
+        <TypingIndicator typingUsers={typingUsers} />
+
         <MessageInput
           onSendMessage={onSendMessage}
+          onTypingStart={onTypingStart}
+          onTypingStop={onTypingStop}
           isSending={isSending}
           isConnected={isConnected}
         />
