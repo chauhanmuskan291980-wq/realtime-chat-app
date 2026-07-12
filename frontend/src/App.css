@@ -389,6 +389,38 @@ body {
   }
 }
 
+.chat-header-info {
+  min-width: 0;
+}
+
+.online-users-summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+  color: #067647;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.online-users-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #12b76a;
+  box-shadow: 0 0 0 4px rgba(18, 183, 106, 0.12);
+}
+
+.online-user-names {
+  max-width: 500px;
+  margin-top: 5px !important;
+  overflow: hidden;
+  color: #667085;
+  font-size: 12px !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 @media (max-width: 640px) {
   .join-page,
@@ -445,5 +477,13 @@ body {
     min-width: 70px;
     padding: 10px;
   }
+
+  .online-user-names {
+  max-width: 190px;
+}
+
+.online-users-summary {
+  font-size: 12px;
+}
 }
 

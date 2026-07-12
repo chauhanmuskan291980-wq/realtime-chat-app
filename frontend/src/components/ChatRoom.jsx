@@ -7,6 +7,7 @@ function ChatRoom({
   username,
   messages,
   typingUsers,
+  onlineUsers=[],
   loading,
   isSending,
   isConnected,
@@ -21,6 +22,7 @@ function ChatRoom({
       <section className="chat-container">
         <ChatHeader
           username={username}
+          onlineUsers={onlineUsers}
           isConnected={isConnected}
           onLogout={onLogout}
         />

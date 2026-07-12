@@ -1,32 +1,25 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import ChatRoom from "./components/ChatRoom";
 import UsernameForm from "./components/UsernameForm";
-import {
-  fetchMessages,
-  sendMessage,
-} from "./services/api";
+import { fetchMessages, sendMessage } from "./services/api";
 import { socket } from "./services/socket";
 
 import "./App.css";
 
 function App() {
   const [username, setUsername] = useState(
-    () => localStorage.getItem("chatUsername") || ""
+    () => localStorage.getItem("chatUsername") || "",
   );
 
   const [messages, setMessages] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [isConnected, setIsConnected] = useState(
-    socket.connected
-  );
+  const [isConnected, setIsConnected] = useState(socket.connected);
   const [error, setError] = useState("");
+   
 
   useEffect(() => {
     if (!username) {
@@ -48,36 +41,67 @@ function App() {
       }
     };
 
+  const handleOnlineUsers = ({ users } = {}) => {
+  console.log("Online users received:", users);
+
+  if (!Array.isArray(users)) {
+    console.error("Invalid online users value:", users);
+    return;
+  }
+
+  setOnlineUsers(users);
+
+  setTypingUsers((currentTypingUsers) =>
+    currentTypingUsers.filter((typingUsername) =>
+      users.includes(typingUsername),
+    ),
+  );
+};
+
     const handleConnect = () => {
-      setIsConnected(true);
-      setError("");
+  setIsConnected(true);
+  setError("");
 
-      socket.emit("user:join", {
-        username,
-      });
-    };
+  socket.emit(
+    "user:join",
+    { username },
+    (response) => {
+      console.log(
+        "Join response received:",
+        response
+      );
 
+      if (!response?.success) {
+        setError(
+          response?.message ||
+            "Unable to join the chat."
+        );
+        return;
+      }
+
+      if (Array.isArray(response.users)) {
+        setOnlineUsers(response.users);
+      }
+    }
+  );
+};
     const handleDisconnect = () => {
       setIsConnected(false);
       setTypingUsers([]);
+      setOnlineUsers([])
     };
 
     const handleConnectError = (socketError) => {
-      console.error(
-        "Socket connection error:",
-        socketError
-      );
+      console.error("Socket connection error:", socketError);
 
       setIsConnected(false);
-      setError(
-        "Unable to connect to the chat server. Retrying..."
-      );
+      setError("Unable to connect to the chat server. Retrying...");
     };
 
     const handleNewMessage = (newMessage) => {
       setMessages((currentMessages) => {
         const alreadyExists = currentMessages.some(
-          (message) => message.id === newMessage.id
+          (message) => message.id === newMessage.id,
         );
 
         if (alreadyExists) {
@@ -88,13 +112,8 @@ function App() {
       });
     };
 
-    const handleTypingStart = ({
-      username: typingUsername,
-    }) => {
-      if (
-        !typingUsername ||
-        typingUsername === username
-      ) {
+    const handleTypingStart = ({ username: typingUsername }) => {
+      if (!typingUsername || typingUsername === username) {
         return;
       }
 
@@ -107,14 +126,11 @@ function App() {
       });
     };
 
-    const handleTypingStop = ({
-      username: typingUsername,
-    }) => {
+    const handleTypingStop = ({ username: typingUsername }) => {
       setTypingUsers((currentUsers) =>
         currentUsers.filter(
-          (currentUsername) =>
-            currentUsername !== typingUsername
-        )
+          (currentUsername) => currentUsername !== typingUsername,
+        ),
       );
     };
 
@@ -122,26 +138,38 @@ function App() {
 
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
+    socket.on("users:online", handleOnlineUsers);
     socket.on("connect_error", handleConnectError);
     socket.on("message:new", handleNewMessage);
     socket.on("typing:start", handleTypingStart);
     socket.on("typing:stop", handleTypingStop);
 
     if (!socket.connected) {
-      socket.connect();
-    } else {
-      /*
-       * If the socket was already connected before this
-       * effect ran, identify the current user immediately.
-       */
-      socket.emit("user:join", {
-        username,
-      });
+  socket.connect();
+} else {
+  socket.emit(
+    "user:join",
+    { username },
+    (response) => {
+      console.log(
+        "Existing connection join response:",
+        response
+      );
+
+      if (
+        response?.success &&
+        Array.isArray(response.users)
+      ) {
+        setOnlineUsers(response.users);
+      }
     }
+  );
+}
 
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
+      socket.off("users:online", handleOnlineUsers);
       socket.off("connect_error", handleConnectError);
       socket.off("message:new", handleNewMessage);
       socket.off("typing:start", handleTypingStart);
@@ -168,8 +196,7 @@ function App() {
       console.error(requestError);
 
       const message =
-        requestError.response?.data?.message ||
-        "Unable to send your message.";
+        requestError.response?.data?.message || "Unable to send your message.";
 
       setError(message);
 
@@ -192,19 +219,21 @@ function App() {
   }, []);
 
   const handleLogout = () => {
-    if (socket.connected) {
-      socket.emit("typing:stop");
-    }
+  if (socket.connected) {
+    socket.emit("typing:stop");
+  }
 
-    localStorage.removeItem("chatUsername");
-    socket.disconnect();
+  localStorage.removeItem("chatUsername");
+  socket.disconnect();
 
-    setUsername("");
-    setMessages([]);
-    setTypingUsers([]);
-    setError("");
-    setIsConnected(false);
-  };
+  setUsername("");
+  setMessages([]);
+  setTypingUsers([]);
+  setOnlineUsers([]);
+  setError("");
+  setIsConnected(false);
+};
+
 
   if (!username) {
     return <UsernameForm onJoin={handleJoin} />;
@@ -215,6 +244,7 @@ function App() {
       username={username}
       messages={messages}
       typingUsers={typingUsers}
+      onlineUsers={onlineUsers}
       loading={loading}
       isSending={isSending}
       isConnected={isConnected}
