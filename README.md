@@ -5,7 +5,14 @@ A full-stack real-time chat application built with **React**, **Node.js**, **Exp
 The application allows multiple users to join a public chat room, send and receive messages instantly, view previous messages after refreshing the page, see message timestamps, view online users, and see typing indicators.
 
 ---
- 
+
+## Demo
+
+- **GitHub Repository:** https://github.com/chauhanmuskan291980-wq/realtime-chat-app
+- **Live Application:** http://31.97.230.36:8081
+- **Screen Recording:** `<ADD_YOUR_GOOGLE_DRIVE_VIDEO_LINK>`
+
+> The live application is currently served over HTTP using the VPS public IP and port `8081`.
 
 ---
 
@@ -186,7 +193,7 @@ git --version
 ### 1. Clone the repository
 
 ```bash
-git clone <ADD_YOUR_GITHUB_REPOSITORY_LINK>
+git clone https://github.com/chauhanmuskan291980-wq/realtime-chat-app.git
 cd realtime-chat-app
 ```
 
@@ -277,6 +284,98 @@ The frontend should run at:
 ```text
 http://localhost:5173
 ```
+
+---
+
+
+---
+
+## Production Deployment
+
+The application is deployed on an Ubuntu VPS using **Nginx** and **PM2**.
+
+### Live URL
+
+```text
+http://31.97.230.36:8081
+```
+
+### Deployment Architecture
+
+```text
+Browser
+   |
+   v
+Nginx :8081
+   |
+   |-- /              -> React production build
+   |-- /api/          -> Node.js backend on 127.0.0.1:5001
+   |-- /socket.io/    -> Socket.io backend on 127.0.0.1:5001
+                           |
+                           v
+                     SQLite Database
+```
+
+### Production Services
+
+| Service | Purpose |
+|---|---|
+| Nginx | Serves the React build and proxies API/Socket.io traffic |
+| PM2 | Keeps the Node.js backend running |
+| Node.js backend | Runs Express and Socket.io on port `5001` |
+| SQLite | Stores message history |
+| UFW | Allows public access to port `8081` |
+
+### Backend Production Environment
+
+```env
+PORT=5001
+CLIENT_URL=http://31.97.230.36:8081
+DATABASE_PATH=./database/chat.db
+NODE_ENV=production
+```
+
+### Frontend Production Environment
+
+```env
+VITE_API_URL=/api
+VITE_SOCKET_URL=
+```
+
+Leaving `VITE_SOCKET_URL` empty makes the Socket.io client connect to the same host and port that serves the frontend.
+
+### PM2 Process
+
+The backend is managed with this PM2 process name:
+
+```text
+realtime-chat-api
+```
+
+Useful commands:
+
+```bash
+pm2 status
+pm2 logs realtime-chat-api
+pm2 restart realtime-chat-api
+pm2 save
+```
+
+### Nginx Routes
+
+```text
+/             React frontend
+/api/         Express REST API
+/socket.io/   Socket.io and WebSocket traffic
+```
+
+### Deployment Notes
+
+- The frontend is served from `frontend/dist`.
+- The backend is not exposed directly to the public internet.
+- Nginx forwards REST API and Socket.io traffic to port `5001`.
+- Existing VPS applications remain isolated because this project uses a separate PM2 process and public port `8081`.
+- HTTPS can be added later by assigning a domain or subdomain and configuring an SSL certificate.
 
 ---
 
@@ -560,7 +659,7 @@ A username-based login is used without passwords or JWT authentication because f
 - The maximum message length is 500 characters.
 - SQLite is sufficient for the assignment.
 - Read receipts are outside the main project scope.
-- Deployment is optional.
+- The application is deployed on an Ubuntu VPS using Nginx and PM2.
 - The application is demonstrated using a screen recording instead of an APK because React web was used.
 
 ---
@@ -592,7 +691,19 @@ A username-based login is used without passwords or JWT authentication because f
 - Rate limiting
 - Automated tests
 - Docker support
-- Cloud deployment
+- HTTPS with a custom domain
+- CI/CD-based automatic deployment
+
+---
+
+## Submission
+
+- **Candidate Name:** Muskan Chauhan
+- **Project:** Real-Time Chat Application
+- **GitHub Repository:** https://github.com/chauhanmuskan291980-wq/realtime-chat-app
+- **Live Application:** http://31.97.230.36:8081
+- **Screen Recording:** `<ADD_YOUR_GOOGLE_DRIVE_VIDEO_LINK>`
+- **APK:** Not applicable because the frontend was built with React web
 
 ---
 
