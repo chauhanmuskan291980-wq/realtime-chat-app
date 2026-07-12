@@ -10,7 +10,7 @@ The application allows multiple users to join a public chat room, send and recei
 
 - **GitHub Repository:** https://github.com/chauhanmuskan291980-wq/realtime-chat-app
 - **Live Application:** http://31.97.230.36:8081
-- **Screen Recording:** `<ADD_YOUR_GOOGLE_DRIVE_VIDEO_LINK>`
+- **Screen Recording:** https://drive.google.com/file/d/181Pxt-ba5NRtgMzqByCWNh8DP43ZwqOf/view?usp=sharing
 
 > The live application is currently served over HTTP using the VPS public IP and port `8081`.
 
@@ -702,7 +702,7 @@ A username-based login is used without passwords or JWT authentication because f
 - **Project:** Real-Time Chat Application
 - **GitHub Repository:** https://github.com/chauhanmuskan291980-wq/realtime-chat-app
 - **Live Application:** http://31.97.230.36:8081
-- **Screen Recording:** `<ADD_YOUR_GOOGLE_DRIVE_VIDEO_LINK>`
+- **Screen Recording:** https://drive.google.com/file/d/181Pxt-ba5NRtgMzqByCWNh8DP43ZwqOf/view?usp=sharing
 - **APK:** Not applicable because the frontend was built with React web
 
 ---
