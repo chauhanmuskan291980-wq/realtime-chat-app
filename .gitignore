@@ -1,0 +1,18 @@
+# Environment variables
+.env
+.env.local
+
+# SQLite database
+*.db
+*.db-journal
+
+# Build files
+dist/
+build/
+
+# Logs
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
