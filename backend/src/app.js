@@ -2,6 +2,13 @@ import express from "express";
 import cors from "cors";
 
 import { env } from "./config/env.js";
+import messageRouter from "./routes/message.routes.js";
+import {
+  notFoundHandler,
+} from "./middleware/notFound.middleware.js";
+import {
+  errorHandler,
+} from "./middleware/error.middleware.js";
 
 const app = express();
 
@@ -12,7 +19,11 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(
+  express.json({
+    limit: "10kb",
+  })
+);
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -29,11 +40,9 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Route not found: ${req.method} ${req.originalUrl}`,
-  });
-});
+app.use("/api/messages", messageRouter);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export default app;
